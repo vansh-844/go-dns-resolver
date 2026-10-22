@@ -97,6 +97,18 @@ func NewResponse(query *Message, rcode RCode) *Message {
 	}
 }
 
+// Truncate returns a copy of m for a response that is too large to send: the
+// TC flag is set and all records are removed, while the rest of the header and
+// the questions are kept. m itself is not modified.
+func (m *Message) Truncate() *Message {
+	h := m.Header
+	h.Flags |= flagTC
+	t := &Message{Header: h, Questions: append([]Question(nil), m.Questions...)}
+	t.Header.QDCount = uint16(len(t.Questions))
+	t.Header.ANCount, t.Header.NSCount, t.Header.ARCount = 0, 0, 0
+	return t
+}
+
 // Pack encodes m in wire format. The header counts are derived from the
 // lengths of the sections, so the counts stored in m.Header are ignored. Names
 // are written uncompressed. On failure it returns nil and an error.

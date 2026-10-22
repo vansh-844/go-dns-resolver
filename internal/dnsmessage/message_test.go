@@ -398,3 +398,41 @@ func TestPackMaxCounts(t *testing.T) {
 		t.Errorf("questions = %d, QDCount = %d", len(got.Questions), got.Header.QDCount)
 	}
 }
+
+func TestMessageTruncate(t *testing.T) {
+	m := &Message{
+		Header:    Header{ID: 3, Flags: 0x8580, QDCount: 1, ANCount: 2, NSCount: 1, ARCount: 1},
+		Questions: []Question{{Name: "example.com", Type: TypeA, Class: ClassIN}},
+		Answers: []ResourceRecord{
+			{Name: "example.com", Class: ClassIN, Data: A{netip.MustParseAddr("1.2.3.4")}},
+			{Name: "example.com", Class: ClassIN, Data: A{netip.MustParseAddr("1.2.3.5")}},
+		},
+		Authorities: []ResourceRecord{{Name: "example.com", Class: ClassIN, Data: NS{"ns.example.com"}}},
+		Additionals: []ResourceRecord{{Name: "ns.example.com", Class: ClassIN, Data: A{netip.MustParseAddr("1.2.3.6")}}},
+	}
+	orig := m.Header
+
+	got := m.Truncate()
+
+	if got.Header.Flags != orig.Flags|0x0200 || got.Header.ID != 3 {
+		t.Errorf("header = %+v, want original flags plus TC", got.Header)
+	}
+	if got.Header.QDCount != 1 || got.Header.ANCount != 0 || got.Header.NSCount != 0 || got.Header.ARCount != 0 {
+		t.Errorf("counts = %+v", got.Header)
+	}
+	if !reflect.DeepEqual(got.Questions, m.Questions) {
+		t.Errorf("questions = %+v", got.Questions)
+	}
+	if got.Answers != nil || got.Authorities != nil || got.Additionals != nil {
+		t.Errorf("records not removed: %+v", got)
+	}
+
+	// The original is untouched, and the copy does not share question memory.
+	if m.Header != orig || len(m.Answers) != 2 {
+		t.Errorf("Truncate modified the original: %+v", m)
+	}
+	got.Questions[0].Name = "changed"
+	if m.Questions[0].Name != "example.com" {
+		t.Error("truncated copy shares questions with the original")
+	}
+}
