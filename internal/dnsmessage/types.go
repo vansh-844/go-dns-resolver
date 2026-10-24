@@ -10,18 +10,29 @@ const (
 	TypeA     Type = 1
 	TypeNS    Type = 2
 	TypeCNAME Type = 5
+	TypeSOA   Type = 6
+	TypePTR   Type = 12
 	TypeMX    Type = 15
 	TypeTXT   Type = 16
 	TypeAAAA  Type = 28
+	TypeSRV   Type = 33
+
+	// TypeOPT is the EDNS0 pseudo-record (RFC 6891). It is not decoded and
+	// comes out of Unpack as Unknown.
+	TypeOPT Type = 41
 )
 
 var typeNames = map[Type]string{
 	TypeA:     "A",
 	TypeNS:    "NS",
 	TypeCNAME: "CNAME",
+	TypeSOA:   "SOA",
+	TypePTR:   "PTR",
 	TypeMX:    "MX",
 	TypeTXT:   "TXT",
 	TypeAAAA:  "AAAA",
+	TypeSRV:   "SRV",
+	TypeOPT:   "OPT",
 }
 
 // String returns the standard mnemonic for t, or "TYPE<n>" if it is unknown.

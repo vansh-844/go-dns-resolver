@@ -7,4 +7,5 @@ var (
 	ErrServerClosed  = errors.New("server: server closed")
 	ErrServerStarted = errors.New("server: server already started")
 	ErrNilHandler    = errors.New("server: nil handler")
+	ErrNotListening  = errors.New("server: not listening, call Listen first")
 )
