@@ -8,7 +8,10 @@ PI_GOARCH ?= arm64
 PI_HOST   ?= vansh844@vansh-pi.local
 PI_PATH   ?= /home/vansh844/
 
-.PHONY: all build build-pi deploy run test vet fmt fmt-check check capture clean
+BLOCKLIST_DIR := blocklists
+BLOCKLIST_URL ?= https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+
+.PHONY: all build build-pi deploy run test vet fmt fmt-check check capture blocklist clean
 
 all: check build
 
@@ -52,6 +55,12 @@ capture:
 	go run ./cmd/capture -name example.com -type NS
 	go run ./cmd/capture -name nonexistent-xyz-12345.com -type A
 	go run ./cmd/capture -name example.com -type A -edns -file example.com_A_edns.hex
+
+# Download a blocklist for -blocklist. Override the source with
+# `make blocklist BLOCKLIST_URL=...`.
+blocklist:
+	mkdir -p $(BLOCKLIST_DIR)
+	curl -fsSL $(BLOCKLIST_URL) -o $(BLOCKLIST_DIR)/stevenblack.txt
 
 clean:
 	rm -rf $(BUILD_DIR) $(PI_DIR)

@@ -436,3 +436,35 @@ func TestMessageTruncate(t *testing.T) {
 		t.Error("truncated copy shares questions with the original")
 	}
 }
+
+func TestMessageClone(t *testing.T) {
+	m := &Message{
+		Header:      Header{ID: 3, Flags: 0x8180},
+		Questions:   []Question{{Name: "example.com", Type: TypeA, Class: ClassIN}},
+		Answers:     []ResourceRecord{{Name: "example.com", Class: ClassIN, TTL: 300, Data: A{netip.MustParseAddr("1.2.3.4")}}},
+		Authorities: []ResourceRecord{{Name: "example.com", Class: ClassIN, TTL: 60, Data: NS{"ns.example.com"}}},
+		Additionals: []ResourceRecord{{Name: "ns.example.com", Class: ClassIN, TTL: 60, Data: A{netip.MustParseAddr("1.2.3.5")}}},
+	}
+
+	got := m.Clone()
+	if !reflect.DeepEqual(got, m) {
+		t.Fatalf("clone = %+v, want %+v", got, m)
+	}
+
+	got.Header.ID = 9
+	got.Questions[0].Name = "changed"
+	got.Answers[0].TTL = 1
+	got.Authorities[0].TTL = 1
+	got.Additionals[0].TTL = 1
+	if m.Header.ID != 3 || m.Questions[0].Name != "example.com" || m.Answers[0].TTL != 300 ||
+		m.Authorities[0].TTL != 60 || m.Additionals[0].TTL != 60 {
+		t.Errorf("changing the clone changed the original: %+v", m)
+	}
+}
+
+func TestMessageCloneEmpty(t *testing.T) {
+	got := (&Message{Header: Header{ID: 1}}).Clone()
+	if got.Header.ID != 1 || got.Questions != nil || got.Answers != nil {
+		t.Errorf("clone = %+v", got)
+	}
+}

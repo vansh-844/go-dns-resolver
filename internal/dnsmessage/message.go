@@ -3,6 +3,7 @@ package dnsmessage
 import (
 	"fmt"
 	"math"
+	"slices"
 )
 
 // Smallest possible encodings, used to bound allocations from header counts:
@@ -94,6 +95,19 @@ func NewResponse(query *Message, rcode RCode) *Message {
 	return &Message{
 		Header:    Header{ID: query.Header.ID, Flags: flags},
 		Questions: append([]Question(nil), query.Questions...),
+	}
+}
+
+// Clone returns a copy of m whose header and sections can be changed without
+// affecting m. Record data is shared, since no ResourceData is modified after
+// it is built.
+func (m *Message) Clone() *Message {
+	return &Message{
+		Header:      m.Header,
+		Questions:   slices.Clone(m.Questions),
+		Answers:     slices.Clone(m.Answers),
+		Authorities: slices.Clone(m.Authorities),
+		Additionals: slices.Clone(m.Additionals),
 	}
 }
 
